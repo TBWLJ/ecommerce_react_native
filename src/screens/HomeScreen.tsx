@@ -292,6 +292,7 @@ export default function HomeScreen() {
             <TouchableOpacity
               style={styles.profileButton}
               activeOpacity={0.8}
+              onPress={() => router.push("/profile")}
             >
               <Image
                 source={{
