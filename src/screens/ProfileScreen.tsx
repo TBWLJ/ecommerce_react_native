@@ -113,7 +113,7 @@ export default function ProfileScreen() {
               activeOpacity={0.75}
             >
               <View style={styles.menuLeft}>
-                <Ionicons name={item.icon} size={20} color="#6B6B6B" />
+                <Ionicons name={item.icon as React.ComponentProps<typeof Ionicons>["name"]} size={20} color="#6B6B6B" />
                 <Text style={styles.menuText}>{item.title}</Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color="#A0A0A0" />

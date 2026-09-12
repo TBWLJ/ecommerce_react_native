@@ -8,10 +8,6 @@ export type AuthUser = {
   role: AuthRole;
 };
 
-export type StoredUser = AuthUser & {
-  password: string;
-};
-
 export type Product = {
   id: string;
   name: string;

@@ -40,7 +40,7 @@ function normalizeProduct(raw: Record<string, unknown>): Product {
         ? Number(raw.rating)
         : null,
     reviews: Number(raw.reviews || 0),
-    sold: raw.sold || raw.sales || "0",
+    sold: String(raw.sold || raw.sales || "0"),
     brand: String(raw.brand || categories[0] || "Store"),
     createdAt: raw.createdAt ? String(raw.createdAt) : undefined,
     updatedAt: raw.updatedAt ? String(raw.updatedAt) : undefined,

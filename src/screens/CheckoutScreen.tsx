@@ -16,6 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { cartSummary, useCartStore } from "@/store/cart";
 import { useAuthStore } from "@/store/auth";
 import { formatMoney } from "@/lib/money";
+import { createOrder } from "@/services/orders";
 
 const paymentMethods = [
   { id: "card", label: "Card" },
@@ -26,6 +27,7 @@ const paymentMethods = [
 export default function CheckoutScreen() {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
+  const token = useAuthStore((state) => state.token);
   const items = useCartStore((state) => state.items);
   const clearCart = useCartStore((state) => state.clearCart);
   const { subtotal, shipping, total } = useMemo(
@@ -42,6 +44,7 @@ export default function CheckoutScreen() {
   const [error, setError] = useState("");
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState("");
+  const [placingOrder, setPlacingOrder] = useState(false);
 
   useEffect(() => {
     if (user?.name && !fullName) {
@@ -56,8 +59,8 @@ export default function CheckoutScreen() {
     });
   };
 
-  const handlePlaceOrder = () => {
-    if (!user) {
+  const handlePlaceOrder = async () => {
+    if (!user || !token) {
       setError("Please sign in before checking out.");
       return;
     }
@@ -72,11 +75,32 @@ export default function CheckoutScreen() {
       return;
     }
 
-    const nextOrderId = `ORD-${Date.now().toString().slice(-6)}`;
-    setOrderId(nextOrderId);
-    setOrderPlaced(true);
-    setError("");
-    clearCart();
+    try {
+      setPlacingOrder(true);
+      setError("");
+      const nextOrderId = await createOrder(
+        {
+          items,
+          fullName,
+          phone,
+          address,
+          city,
+          note,
+          paymentMethod,
+          subtotal,
+          shipping,
+          total,
+        },
+        token
+      );
+      setOrderId(nextOrderId || "confirmed");
+      setOrderPlaced(true);
+      clearCart();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to place order.");
+    } finally {
+      setPlacingOrder(false);
+    }
   };
 
   if (!user) {
@@ -287,8 +311,14 @@ export default function CheckoutScreen() {
             ))}
           </View>
 
-          <TouchableOpacity style={styles.primaryButton} onPress={handlePlaceOrder}>
-            <Text style={styles.primaryButtonText}>Place order</Text>
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={handlePlaceOrder}
+            disabled={placingOrder}
+          >
+            <Text style={styles.primaryButtonText}>
+              {placingOrder ? "Placing order..." : "Place order"}
+            </Text>
           </TouchableOpacity>
 
           <View style={{ height: 28 }} />

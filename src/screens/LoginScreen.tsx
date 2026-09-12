@@ -15,8 +15,12 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthStore } from "@/store/auth";
 
-const resolveRedirect = (value: string | string[] | undefined) =>
-  typeof value === "string" && value.startsWith("/") ? value : "/";
+const resolveRedirect = (value: string | string[] | undefined): "/" | "/checkout" | "/profile" => {
+  if (value === "/checkout" || value === "/profile") {
+    return value;
+  }
+  return "/";
+};
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -36,7 +40,7 @@ export default function LoginScreen() {
     }
   }, [redirectTo, router, user]);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
       setError("Please enter both email and password.");
       return;
@@ -45,7 +49,7 @@ export default function LoginScreen() {
     try {
       setLoading(true);
       setError("");
-      signIn({ email, password });
+      await signIn({ email, password });
       router.replace(redirectTo);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to sign in.");

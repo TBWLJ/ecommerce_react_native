@@ -15,8 +15,12 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthStore } from "@/store/auth";
 
-const resolveRedirect = (value: string | string[] | undefined) =>
-  typeof value === "string" && value.startsWith("/") ? value : "/";
+const resolveRedirect = (value: string | string[] | undefined): "/" | "/checkout" | "/profile" => {
+  if (value === "/checkout" || value === "/profile") {
+    return value;
+  }
+  return "/";
+};
 
 export default function SignupScreen() {
   const router = useRouter();
@@ -38,7 +42,7 @@ export default function SignupScreen() {
     }
   }, [redirectTo, router, user]);
 
-  const handleSignup = () => {
+  const handleSignup = async () => {
     if (!name.trim() || !email.trim() || !password.trim()) {
       setError("Please complete all fields.");
       return;
@@ -57,7 +61,7 @@ export default function SignupScreen() {
     try {
       setLoading(true);
       setError("");
-      signUp({ name, email, password });
+      await signUp({ name, email, password });
       router.replace(redirectTo);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to create account.");

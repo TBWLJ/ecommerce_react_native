@@ -3,7 +3,8 @@ import { Tabs } from "expo-router";
 import { useCartStore } from "@/store/cart";
 
 export default function TabsLayout() {
-  const itemCount = useCartStore((state) => state.itemCount);
+  const items = useCartStore((state) => state.items);
+  const itemCount = items.reduce((count, item) => count + item.quantity, 0);
 
   return (
     <Tabs

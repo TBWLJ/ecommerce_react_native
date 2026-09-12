@@ -10,6 +10,20 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npm install
    ```
 
+The app reads its backend URL from `EXPO_PUBLIC_API_URL`. If it is omitted, it uses
+`https://shop4me-7d6d.onrender.com/api`.
+
+The current client expects these backend routes:
+
+- `GET /product`
+- `GET /product/find/:id`
+- `POST /auth/login`
+- `POST /auth/register`
+- `POST /orders`
+
+Authentication responses should include `token` or `accessToken` and a `user` (or
+`data`) object. Authenticated requests send the token as a bearer token.
+
 2. Start the app
 
    ```bash
