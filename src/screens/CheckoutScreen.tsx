@@ -1,10 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
+import * as Linking from "expo-linking";
 import { useRouter } from "expo-router";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useEffect, useMemo, useState } from "react";
 import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
@@ -16,13 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { cartSummary, useCartStore } from "@/store/cart";
 import { useAuthStore } from "@/store/auth";
 import { formatMoney } from "@/lib/money";
-import { createOrder } from "@/services/orders";
-
-const paymentMethods = [
-  { id: "card", label: "Card" },
-  { id: "transfer", label: "Transfer" },
-  { id: "cash", label: "Cash on delivery" },
-] as const;
+import { initializeCheckout } from "@/services/orders";
 
 export default function CheckoutScreen() {
   const router = useRouter();
@@ -39,8 +32,8 @@ export default function CheckoutScreen() {
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
-  const [note, setNote] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<(typeof paymentMethods)[number]["id"]>("card");
+  const [state, setState] = useState("");
+  const [country, setCountry] = useState("Nigeria");
   const [error, setError] = useState("");
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState("");
@@ -70,7 +63,14 @@ export default function CheckoutScreen() {
       return;
     }
 
-    if (!fullName.trim() || !phone.trim() || !address.trim() || !city.trim()) {
+    if (
+      !fullName.trim() ||
+      !phone.trim() ||
+      !address.trim() ||
+      !city.trim() ||
+      !state.trim() ||
+      !country.trim()
+    ) {
       setError("Please complete the delivery details.");
       return;
     }
@@ -78,24 +78,24 @@ export default function CheckoutScreen() {
     try {
       setPlacingOrder(true);
       setError("");
-      const nextOrderId = await createOrder(
+      const checkout = await initializeCheckout(
         {
           items,
           fullName,
+          email: user.email,
           phone,
           address,
           city,
-          note,
-          paymentMethod,
-          subtotal,
-          shipping,
+          state,
+          country,
           total,
         },
         token
       );
-      setOrderId(nextOrderId || "confirmed");
+      setOrderId(checkout.orderId);
       setOrderPlaced(true);
       clearCart();
+      await Linking.openURL(checkout.paymentUrl);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to place order.");
     } finally {
@@ -172,11 +172,13 @@ export default function CheckoutScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      <KeyboardAwareScrollView
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        enableOnAndroid
+        extraScrollHeight={24}
+        contentContainerStyle={styles.scrollContent}
       >
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
           <View style={styles.header}>
             <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
               <Ionicons name="arrow-back" size={22} color="#171717" />
@@ -258,41 +260,27 @@ export default function CheckoutScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Note for rider</Text>
+              <Text style={styles.inputLabel}>State</Text>
               <TextInput
-                value={note}
-                onChangeText={setNote}
-                placeholder="Apartment number, delivery hints..."
+                value={state}
+                onChangeText={setState}
+                placeholder="Lagos"
                 placeholderTextColor="#999999"
-                multiline
-                style={[styles.input, styles.textArea]}
+                style={styles.input}
               />
             </View>
-          </View>
 
-          <View style={styles.formCard}>
-            <Text style={styles.sectionTitle}>Payment method</Text>
-            <View style={styles.paymentRow}>
-              {paymentMethods.map((method) => {
-                const active = paymentMethod === method.id;
-                return (
-                  <TouchableOpacity
-                    key={method.id}
-                    style={[styles.paymentChip, active && styles.paymentChipActive]}
-                    onPress={() => setPaymentMethod(method.id)}
-                  >
-                    <Text
-                      style={[
-                        styles.paymentChipText,
-                        active && styles.paymentChipTextActive,
-                      ]}
-                    >
-                      {method.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Country</Text>
+              <TextInput
+                value={country}
+                onChangeText={setCountry}
+                placeholder="Nigeria"
+                placeholderTextColor="#999999"
+                style={styles.input}
+              />
             </View>
+
           </View>
 
           {!!error && <Text style={styles.errorText}>{error}</Text>}
@@ -322,8 +310,7 @@ export default function CheckoutScreen() {
           </TouchableOpacity>
 
           <View style={{ height: 28 }} />
-        </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 }
@@ -440,31 +427,6 @@ const styles = StyleSheet.create({
   textArea: {
     minHeight: 90,
     paddingTop: 14,
-  },
-  paymentRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-  },
-  paymentChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 999,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E7E7E7",
-  },
-  paymentChipActive: {
-    backgroundColor: "#2B8F17",
-    borderColor: "#2B8F17",
-  },
-  paymentChipText: {
-    fontSize: 12,
-    fontWeight: "800",
-    color: "#4B4B4B",
-  },
-  paymentChipTextActive: {
-    color: "#FFFFFF",
   },
   errorText: {
     marginHorizontal: 20,

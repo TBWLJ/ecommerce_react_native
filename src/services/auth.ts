@@ -16,7 +16,7 @@ const toUser = (value: unknown): AuthUser => {
   }
 
   const raw = value as Record<string, unknown>;
-  const role: AuthRole = raw.role === "admin" ? "admin" : "customer";
+  const role: AuthRole = raw.role === "admin" || raw.isAdmin === true ? "admin" : "customer";
   const id = String(raw._id || raw.id || raw.userId || "");
   const email = String(raw.email || "");
   const name = String(raw.name || raw.fullName || raw.username || email);
@@ -47,19 +47,23 @@ const normalizeAuthResponse = (payload: AuthPayload): AuthResult => {
 };
 
 export function login(email: string, password: string) {
-  return requestJson<AuthPayload>("/auth/login", {
+  return requestJson<AuthPayload>("/users/login", {
     method: "POST",
     body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
   }).then(normalizeAuthResponse);
 }
 
 export function register(name: string, email: string, password: string) {
-  return requestJson<AuthPayload>("/auth/register", {
+  return requestJson<{ id: string }>("/users/register", {
     method: "POST",
     body: JSON.stringify({
       name: name.trim(),
       email: email.trim().toLowerCase(),
       password,
     }),
-  }).then(normalizeAuthResponse);
+  }).then(() => login(email, password));
+}
+
+export function logout(token: string | null) {
+  return requestJson<{ message: string }>("/users/logout", { method: "POST" }, token);
 }

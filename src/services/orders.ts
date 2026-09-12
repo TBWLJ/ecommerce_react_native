@@ -1,57 +1,51 @@
 import { requestJson } from "@/lib/api";
 import { CartItem } from "@/types/models";
 
-export type CreateOrderInput = {
+export type InitializeCheckoutInput = {
   items: CartItem[];
   fullName: string;
+  email: string;
   phone: string;
   address: string;
   city: string;
-  note: string;
-  paymentMethod: string;
-  subtotal: number;
-  shipping: number;
+  state: string;
+  country: string;
   total: number;
 };
 
-type OrderResponse = {
-  _id?: string;
-  id?: string;
-  orderId?: string;
-  data?: { _id?: string; id?: string; orderId?: string };
+type CheckoutResponse = {
+  orderId: string;
+  paymentUrl: string;
 };
 
-export async function createOrder(input: CreateOrderInput, token: string) {
-  const payload = await requestJson<OrderResponse>(
-    "/orders",
+export async function initializeCheckout(
+  input: InitializeCheckoutInput,
+  token: string
+) {
+  return requestJson<CheckoutResponse>(
+    "/checkout/checkout",
     {
       method: "POST",
       body: JSON.stringify({
         items: input.items.map((item) => ({
-          product: item.id,
-          productId: item.id,
+          id: item.id,
           name: item.name,
           price: item.price,
           quantity: item.quantity,
+          imageUrl: item.imageUrl,
         })),
-        shippingAddress: {
-          fullName: input.fullName.trim(),
+        total: input.total,
+        shipping: {
+          name: input.fullName.trim(),
+          email: input.email.trim().toLowerCase(),
           phone: input.phone.trim(),
           address: input.address.trim(),
           city: input.city.trim(),
-          note: input.note.trim(),
+          state: input.state.trim(),
+          country: input.country.trim(),
         },
-        paymentMethod: input.paymentMethod,
-        subtotal: input.subtotal,
-        shipping: input.shipping,
-        total: input.total,
       }),
     },
     token
-  );
-
-  return String(
-    payload.orderId || payload._id || payload.id || payload.data?.orderId ||
-      payload.data?._id || payload.data?.id || ""
   );
 }

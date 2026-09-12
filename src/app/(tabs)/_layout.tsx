@@ -57,6 +57,7 @@ export default function TabsLayout() {
         name="cart"
         options={{
           title: "Cart",
+          tabBarStyle: { display: "none" },
           tabBarBadge: itemCount > 0 ? itemCount : undefined,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="cart-outline" size={size} color={color} />

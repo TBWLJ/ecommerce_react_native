@@ -17,12 +17,14 @@ The current client expects these backend routes:
 
 - `GET /product`
 - `GET /product/find/:id`
-- `POST /auth/login`
-- `POST /auth/register`
-- `POST /orders`
+- `POST /users/login`
+- `POST /users/register`
+- `POST /users/logout`
+- `POST /checkout/checkout`
 
-Authentication responses should include `token` or `accessToken` and a `user` (or
-`data`) object. Authenticated requests send the token as a bearer token.
+Login responses include `token`, `refreshToken`, and a `user` object. The checkout
+endpoint returns `orderId` and `paymentUrl`. Authenticated requests send the access
+token as a bearer token.
 
 2. Start the app
 

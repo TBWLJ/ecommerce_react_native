@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { login, register } from "@/services/auth";
+import { login, logout, register } from "@/services/auth";
 import { AuthUser } from "@/types/models";
 
 type SignInInput = { email: string; password: string };
@@ -14,7 +14,7 @@ type AuthState = {
   setHydrated: (hydrated: boolean) => void;
   signIn: (input: SignInInput) => Promise<AuthUser>;
   signUp: (input: SignUpInput) => Promise<AuthUser>;
-  signOut: () => void;
+  signOut: () => Promise<void>;
   updateProfile: (patch: Partial<Pick<AuthUser, "name" | "avatar">>) => void;
 };
 
@@ -37,7 +37,14 @@ export const useAuthStore = create<AuthState>()(
         set({ token: result.token, user: result.user });
         return result.user;
       },
-      signOut: () => set({ user: null, token: null }),
+      signOut: async () => {
+        const token = useAuthStore.getState().token;
+        try {
+          await logout(token);
+        } finally {
+          set({ user: null, token: null });
+        }
+      },
       updateProfile: (patch) =>
         set((state) =>
           state.user ? { user: { ...state.user, ...patch } } : state
