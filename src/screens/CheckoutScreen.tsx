@@ -1,5 +1,4 @@
 import { Ionicons } from "@expo/vector-icons";
-import * as Linking from "expo-linking";
 import { useRouter } from "expo-router";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useEffect, useMemo, useState } from "react";
@@ -22,7 +21,6 @@ export default function CheckoutScreen() {
   const user = useAuthStore((state) => state.user);
   const token = useAuthStore((state) => state.token);
   const items = useCartStore((state) => state.items);
-  const clearCart = useCartStore((state) => state.clearCart);
   const { subtotal, shipping, total } = useMemo(
     () => cartSummary(items),
     [items]
@@ -35,8 +33,6 @@ export default function CheckoutScreen() {
   const [state, setState] = useState("");
   const [country, setCountry] = useState("Nigeria");
   const [error, setError] = useState("");
-  const [orderPlaced, setOrderPlaced] = useState(false);
-  const [orderId, setOrderId] = useState("");
   const [placingOrder, setPlacingOrder] = useState(false);
 
   useEffect(() => {
@@ -92,10 +88,10 @@ export default function CheckoutScreen() {
         },
         token
       );
-      setOrderId(checkout.orderId);
-      setOrderPlaced(true);
-      clearCart();
-      await Linking.openURL(checkout.paymentUrl);
+      router.push({
+        pathname: "/payment",
+        params: { paymentUrl: checkout.paymentUrl, orderId: checkout.orderId },
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to place order.");
     } finally {
@@ -142,26 +138,6 @@ export default function CheckoutScreen() {
             onPress={() => router.push("/cart")}
           >
             <Text style={styles.secondaryButtonText}>Review cart</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  if (orderPlaced) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-        <View style={styles.successState}>
-          <View style={styles.successIcon}>
-            <Ionicons name="checkmark" size={28} color="#FFFFFF" />
-          </View>
-          <Text style={styles.successTitle}>Order placed successfully</Text>
-          <Text style={styles.successText}>
-            Your order {orderId} is confirmed. We’ll keep the details ready in your account.
-          </Text>
-          <TouchableOpacity style={styles.primaryButton} onPress={() => router.replace("/")}>
-            <Text style={styles.primaryButtonText}>Back to home</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
