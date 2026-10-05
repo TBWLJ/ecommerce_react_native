@@ -292,7 +292,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     borderRadius: 24,
     overflow: "hidden",
-    backgroundColor: "#171717",
+    // backgroundColor: "#171717",
+    backgroundColor: "#2bff00",
     position: "relative",
   },
   promoImage: {

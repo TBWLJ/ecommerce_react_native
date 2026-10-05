@@ -226,7 +226,8 @@ const styles = StyleSheet.create({
     marginTop: 18,
     borderRadius: 24,
     overflow: "hidden",
-    backgroundColor: "#171717",
+    // backgroundColor: "#171717",
+    backgroundColor: "#2bff00",
     position: "relative",
   },
   heroImage: {
